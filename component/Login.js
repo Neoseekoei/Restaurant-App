@@ -1,97 +1,123 @@
-import { Text, View, StyleSheet, Image,ImageBackground,TouchableOpacity,TextInput } from 'react-native';
-import React from 'react';
-import {useState} from 'react';
+import React, { useState } from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import {useNavigation} from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
-
 export default function Login() {
 
-  const navigation=useNavigation()
+  const navigation = useNavigation();
 
-  const [text, onChangeText] = React.useState('');
+  // State variables to hold email, password, and error messages
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [error, setError] = useState(null);
 
-  // State variable to hold the password
-	const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('')
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
-	// State variable to track password visibility
-	const [showPassword, setShowPassword] = useState(false);
+  const handleLogin = () => {
+    // Basic email validation
+    if (!email.trim()) {
+      setEmailError('Email is required.');
+      return;
+    } else {
+      setEmailError('');
+    }
 
-	// Function to toggle the password visibility state
-	const toggleShowPassword = () => {
-		setShowPassword(!showPassword);
-	};
+    // Basic password validation
+    if (!password.trim()) {
+      setPasswordError('Password is required.');
+      return;
+    } else {
+      setPasswordError('');
+    }
 
-  const Create =(() =>{
+    // Clear any previous error messages
+    setError(null);
+
+    // Perform login
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        // Signed up
         alert("You Have Successfully Logged In!!!")
         navigation.navigate("Menu")
         const user = userCredential.user;
-        // ...
       })
       .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // ..
+        setError('Invalid email or password. Please try again.');
       });
-    })
-  
+  };
+
   return (
     <View style={styles.container}>
-    <Image source={require('../assets/logo.png')} style={styles.logo}/>
-    <Text style={styles.title}>SIGN IN</Text>
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
+      <Text style={styles.title}>SIGN IN</Text>
 
-    <View style={styles.inputs}> 
-    <TextInput
-        style={styles.input1}
-        keyboardType="email"
-        placeholder="Email"
-        onChangeText={setEmail}
-      />
-      
-       
-			<View style={styles.containerinput}>
-				<TextInput
+      <View style={styles.inputs}>
+        <TextInput
+          style={[styles.input1, emailError ? { borderColor: 'red', borderWidth: 1 } : null]}
+          keyboardType="email-address"
+          placeholder="Email"
+          onChangeText={(text) => setEmail(text)}
+        />
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-					// Set secureTextEntry prop to hide
-					//password when showPassword is false
-					secureTextEntry={!showPassword}
-					value={password}
-					onChangeText={setPassword}
-					style={styles.input}
-					placeholder="Enter Password"
-					placeholderTextColor="#aaa"
-				/>
-				<MaterialCommunityIcons
-					name={showPassword ? 'eye-off' : 'eye'}
-					size={24}
-					color="#aaa"
-					style={styles.icon}
-					onPress={toggleShowPassword}
-				/>
-			</View>
+        <View style={styles.containerinput}>
+          <TextInput
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            style={[styles.input, passwordError ? { borderColor: 'red', borderWidth: 1 } : null]}
+            placeholder="Enter Password"
+            placeholderTextColor="#aaa"
+          />
+          <MaterialCommunityIcons
+            name={showPassword ? 'eye-off' : 'eye'}
+            size={24}
+            color="#aaa"
+            style={styles.icon}
+            onPress={toggleShowPassword}
+          />
+        </View>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-      <TouchableOpacity style={styles.signin}   onPress={Create}><Text>SIGN IN</Text></TouchableOpacity>
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        <TouchableOpacity style={styles.signin} onPress={handleLogin}>
+          <Text>SIGN IN</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.texts}>
-      <TouchableOpacity    onPress={()=> navigation.navigate("ForgotPassword")}><Text style={{color: 'white',textAlign:'center',padding:20,marginTop:9}}>FORGOT PASSWORD?</Text></TouchableOpacity>
-      <TouchableOpacity   onPress={()=> navigation.navigate("Registration")} ><Text style={{color: 'white',textAlign:'center',padding:5}}>CREATE ACCOUNT</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
+          <Text style={{ color: 'white', textAlign: 'center', padding: 20, marginTop: 9 }}>FORGOT PASSWORD?</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Registration")}>
+          <Text style={{ color: 'white', textAlign: 'center', padding: 5 }}>CREATE ACCOUNT</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... existing styles ...
+
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+
   container: {
     justifyContent:'start',
     backgroundColor:'#FFC224',
-    paddingBottom:500
+    paddingBottom:70
   },
 
   logo: {
@@ -117,7 +143,7 @@ const styles = StyleSheet.create({
     paddingLeft:12,
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
   },
 
@@ -141,7 +167,7 @@ const styles = StyleSheet.create({
     fontFamily:'Sans-serif',
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
     paddingLeft:30,
   },
@@ -158,7 +184,7 @@ const styles = StyleSheet.create({
     marginTop:20,
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
 	},
 
@@ -177,4 +203,10 @@ const styles = StyleSheet.create({
 	icon: {
 		marginLeft: 5,
 	},
-  });
+
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+});

@@ -1,32 +1,42 @@
-import { Text, View, StyleSheet, Image, ImageBackground, TouchableOpacity, TextInput } from 'react-native';
-import React from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
+import React, { useState } from 'react';
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { useState } from 'react';
-
 
 export default function ForgotPassword() {
+  const navigation = useNavigation();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState(null);
 
-  const navigation = useNavigation()
-  const [email, setEmail] = useState('')
-  // const [text, onChangeText] = useState('');
+  const handleResetPassword = () => {
+    // Basic email validation
+    if (!email.trim()) {
+      setError('Email is required.');
+      return;
+    }
 
-  const Create = (() => {
+    // Clear any previous error messages
+    setError(null);
+
+    // Check if the email is in a valid format
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    // Send password reset email
     sendPasswordResetEmail(auth, email)
-      .then((userCredential) => {
-        // Signed up
-        alert("Done!!!")
-        navigation.navigate("Login")
-        const user = userCredential.user;
-        // ...
+      .then(() => {
+        Alert.alert('Success', 'Password reset email sent. Check your inbox.');
+        navigation.navigate("Login");
       })
       .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // ..
+        setError('Failed to send password reset email. Please try again.');
       });
-  })
+  };
+
   return (
     <View style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
@@ -35,17 +45,19 @@ export default function ForgotPassword() {
       <View style={styles.inputs}>
         <TextInput
           style={styles.input}
-          // onChangeText={onChangeText}
           value={email}
           placeholder="Email"
           onChangeText={setEmail}
         />
 
+        {error && <Text style={styles.errorText}>{error}</Text>}
+        
+          <TouchableOpacity style={{marginTop:20,marginLeft:30}}><Text style={{color:"white"}}>Go back to <Text style={{color:"blue"}}>Login</Text></Text></TouchableOpacity>
 
-        <TouchableOpacity style={styles.signin} onPress={Create}><Text>RESET</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.signin} onPress={handleResetPassword}>
+          <Text>RESET</Text>
+        </TouchableOpacity>
       </View>
-
-
     </View>
   );
 }
@@ -80,11 +92,9 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
   },
-
-
 
   inputs: {
     marginTop: 70,
@@ -106,10 +116,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Sans-serif',
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
   },
 
-
-
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
+  },
 });

@@ -1,75 +1,113 @@
+import React, { useState } from 'react';
 import { Text, View, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
-import React from 'react';
-import { useState } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../config/firebase";
 
 export default function Registration() {
+  const navigation = useNavigation();
 
-  const navigation = useNavigation()
-
-  const [text, onChangeText] = React.useState('');
-
-  // State variable to hold the password
+  // State variables to hold the username, email, password, and error messages
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('')
-
-  // State variable to track password visibility
   const [showPassword, setShowPassword] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [error, setError] = useState(null);
 
-  // Function to toggle the password visibility state
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
-  const Create =(() =>{
-createUserWithEmailAndPassword(auth, email, password)
-  .then((userCredential) => {
-    // Signed up
-    alert("Done!!!")
-    navigation.navigate("Login");
-    const user = userCredential.user;
-    // ...
-  })
-  .catch((error) => {
-    const errorCode = error.code;
-    const errorMessage = error.message;
-    // ..
-  });
-})
+  const validateEmail = (input) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(input);
+  };
+
+  const handleRegistration = () => {
+    // Clear any previous error messages
+    setUsernameError('');
+    setEmailError('');
+    setPasswordError('');
+    setError(null);
+
+    // Basic username validation
+    if (!username.trim()) {
+      setUsernameError('Username is required.');
+      return;
+    }
+
+    // Basic email validation
+    if (!email.trim()) {
+      setEmailError('Email is required.');
+      return;
+    } else if (!validateEmail(email)) {
+      setEmailError('Invalid email format.');
+      return;
+    }
+
+    // Basic password validation
+    if (!password.trim()) {
+      setPasswordError('Password is required.');
+      return;
+    }
+
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        alert('Account created successfully!');
+        navigation.navigate('Login');
+        const user = userCredential.user;
+
+        // Reference to the "users" collection
+        const usersCollection = collection(db, 'users'+email);
+
+        // Add user data to the collection
+        addDoc(usersCollection, {
+          Name: username,
+          Email: email,
+        });
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        setError(errorMessage);
+      });
+  };
 
   return (
     <View style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
       <Text style={styles.title}>SIGN UP</Text>
-
-      <Text style={styles.subtitle}>Pleace fill in the form to create an account</Text>
+      <Text style={styles.subtitle}>Please fill in the form to create an account</Text>
+      
       <View style={styles.inputs}>
-
         <TextInput
-          style={styles.input1}
+          style={[styles.input1, usernameError ? { borderColor: 'red', borderWidth: 1 } : null]}
           keyboardType="text"
-          placeholder="Usename"
+          placeholder="Username"
+          onChangeText={setUsername}
         />
+        {usernameError ? <Text style={styles.errorText}>{usernameError}</Text> : null}
 
         <TextInput
-          style={styles.input1}
-          keyboardType="email"
+          style={[styles.input1, emailError ? { borderColor: 'red', borderWidth: 1 } : null]}
+          keyboardType="email-address"
           placeholder="Email"
           onChangeText={setEmail}
         />
-
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
         <View style={styles.containerinput}>
           <TextInput
-
-
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
-            style={styles.input}
+            style={[styles.input, passwordError ? { borderColor: 'red', borderWidth: 1 } : null]}
             placeholder="Enter Password"
             placeholderTextColor="#aaa"
           />
@@ -81,16 +119,27 @@ createUserWithEmailAndPassword(auth, email, password)
             onPress={toggleShowPassword}
           />
         </View>
-        <Text style={styles.terms}>By creating an account you agree to our Terms & Privacy</Text>
-        <TouchableOpacity style={styles.signin} onPress={Create}><Text>SIGN UP</Text></TouchableOpacity>
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        <Text style={styles.terms}>Already have an Account? <TouchableOpacity onPress={() => navigation.navigate("Login")} style={{color:"blue",fontWeight:700,marginTop:20}}>Login</TouchableOpacity></Text>
+        <TouchableOpacity style={styles.signin} onPress={handleRegistration}>
+          <Text>SIGN UP</Text>
+        </TouchableOpacity>
       </View>
-
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... (your existing styles)
+
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 5,
+  },
   container: {
     justifyContent: 'start',
     backgroundColor: '#FFC224',
@@ -123,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
   },
 
@@ -149,7 +198,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Sans-serif',
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
   },
 
@@ -166,7 +215,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
 
   },
@@ -182,7 +231,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     shadowOffset: { width: 8, height: 8 },
     shadowColor: 'black',
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   icon: {

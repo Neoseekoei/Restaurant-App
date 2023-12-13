@@ -12,13 +12,14 @@ import ForgotPassword from './component/ForgotPassword';
 import Welcome from './component/Welcome';
 import Menu from './component/Menu';
 import Cart from './component/Cart';
+import Profile from './component/Profile'
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Welcome" component={Welcome} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Registration" component={Registration} />
@@ -27,6 +28,7 @@ export default function App() {
         <Stack.Screen name="Description" component={Description} />
         <Stack.Screen name="ForgotPassword" component={ ForgotPassword} />
         <Stack.Screen name="Cart" component={ Cart} />
+        <Stack.Screen name="Profile" component={ Profile} />
       </Stack.Navigator>
     </NavigationContainer>
   );

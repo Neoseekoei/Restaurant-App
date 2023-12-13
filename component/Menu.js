@@ -181,9 +181,10 @@ export default function Menu() {
    
   return (
     <View style={styles.container}>
+            <ScrollView stickyHeaderIndices={[0]}>
       <View style={styles.icons}>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-          <Image style={styles.logo} source={require('../assets/arrow.png')} />
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <Image style={styles.logo} source={require('../assets/user.png')} />
         </TouchableOpacity>
         <Text style={styles.maintitle}>Food App </Text>
         <TouchableOpacity onPress={handleSignOut}>
@@ -485,7 +486,7 @@ export default function Menu() {
 
       </>
       )}
-      
+     </ScrollView> 
     </View>
   );
 }

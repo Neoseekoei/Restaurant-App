@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from '../config/firebase';
 import { useState, useEffect } from 'react';
 import { auth } from '../config/firebase';
@@ -8,22 +8,66 @@ import { auth } from '../config/firebase';
 export default function Cart({route}) {
 
   const navigation=useNavigation()
+  const { foodItem, count } = route.params;
 
-    const { foodItem, count } = route.params
+
+  const total = foodItem.total || 0;
+  const user = auth.currentUser;
+
+  const fetchCart = async () => {
+    try {
+      if (!user) {
+        console.error("User not authenticated");
+        return;
+      }
+  
+      // Get the user's email
+      const email = user.email;
+  
+      // Creating a reference to the "Cart" collection
+      const cartCollection = collection(db, "Cart"+email);
+  
+      // Adding a new document to the "Cart" collection with the user's ID and other data
+      const docRef = await addDoc(cartCollection, {
+        UserId: user.uid,  // Include the user's ID in the document
+        Name: foodItem.name,
+        Price: total,
+        Image: foodItem.image,
+        Quantity: count,
+        Description: foodItem.description,
+        Options: foodItem.options  // Assuming you want to store the quantity in the document
+      });
+      navigation.navigate("Payment");
+      alert("Order Confirmed");
+      console.log("Document written with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error adding document to Cart collection: ", error);
+    }
+  };
+
+
+
+
+
     return(
         <View style={styles.mainContainer}>
               <View style={styles.row1}>
 
+                <Text style={styles.confirm}>Confirm Order</Text>
+               <View style={styles.group}>
                 <Text style={styles.cardTexts1}>{foodItem.name}</Text>
                 <Image
                   style={styles.card1}
                   source={foodItem.image}
 
                 />
+                <View style={styles.numb}>
+                <Text style={styles.quantity}>Quantity:</Text>
                 <Text style={styles.cardTexts2}>{count}</Text>
-                <Text style={styles.cardTexts3}>{foodItem.price}</Text>
-
-                <TouchableOpacity style={styles.order} onPress={()=> navigation.navigate("Payment")}>place order</TouchableOpacity>
+                </View>
+                <Text style={styles.cardTexts3}>Price:R{total}</Text>
+                 </View>
+                <TouchableOpacity style={styles.order} onPress={fetchCart}>place order</TouchableOpacity>
               </View>
         </View>
     )
@@ -43,8 +87,8 @@ const styles = StyleSheet.create({
       width:250,
       height: 190,
       borderRadius: 10,
-      alignContent:'center',
-      marginLeft:70
+      alignSelf:'center',
+      
      
     },
   
@@ -63,7 +107,7 @@ const styles = StyleSheet.create({
     cardTexts2: {
       fontWeight:700,
       width:90,
-      alignSelf:'center',
+      marginTop:10,
       fontSize:22,
       padding:5,
     },
@@ -71,7 +115,7 @@ const styles = StyleSheet.create({
     cardTexts3: {
       fontWeight:700,
       width:90,
-      alignSelf:'center',
+      
       fontSize:20,
       padding:15,
     },
@@ -88,7 +132,41 @@ const styles = StyleSheet.create({
      marginTop:20,
      fontWeight:700,
      fontSize:19,
-     paddingTop:8
+     paddingTop:8,
+     shadowOffset: { width: 8, height: 8 },
+    shadowColor: 'black',
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
     },
 
+   group: {
+    backgroundColor:'white',
+    width:300,
+    alignSelf:'center',
+    borderRadius:15,
+    shadowOffset: { width: 8, height: 8 },
+    shadowColor: 'black',
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
+   },
+
+   numb: {
+    flexDirection:'row',
+    marginLeft:15,
+   },
+
+   quantity: {
+    fontWeight:700,
+    fontSize:23,
+    marginTop:15,
+  
+   },
+
+   confirm:{
+    fontSize:30,
+    fontWeight:700,
+    color:'white',
+    textAlign:'center',
+    paddingBottom:30
+   }
 })

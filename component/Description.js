@@ -76,7 +76,7 @@ export default function Description() {
 
       <Text style={styles.description}>{foodItem.description}</Text>
       <Text style={styles.options}>{foodItem.options}</Text>
-      <Text style={styles.price}>{foodItem.price}</Text>
+      <Text style={styles.price}>R{parseInt(foodItem.price)*count}</Text>
       <Text style={styles.pizza}>Size</Text>
 
       <View style={styles.size}>
@@ -142,10 +142,17 @@ export default function Description() {
         </View>
       </View>
       <TouchableOpacity
-        style={styles.select}
-        onPress={() => navigation.navigate("Cart", {count: count,  foodItem: foodItem })}>
-        move on
-      </TouchableOpacity>
+  style={styles.select}
+  onPress={() => navigation.navigate("Cart", {
+    count: count,
+    foodItem: {
+      ...foodItem,
+      total: parseInt(foodItem.price) * count, // Add the total price to the foodItem object
+    },
+  })}
+>
+  move on
+</TouchableOpacity>
     </View>
   );
 }
